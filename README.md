@@ -32,6 +32,8 @@ The web UI is available at [`http://localhost:8080`](http://localhost:8080) (log
 
 ## Build from Source
 
+You need to install `llvm`.
+
 ```sh
 git clone https://github.com/albansiffer/xdprobe.git
 cd xdprobe
