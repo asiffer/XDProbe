@@ -25,7 +25,7 @@ jobs:
         run: bun install
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r)
+        run: sudo apt-get update && sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r) gcc-multilib
 
       - name: Build from scratch
         run: make cleanall && make
