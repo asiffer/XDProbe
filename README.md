@@ -32,7 +32,7 @@ The web UI is available at [`http://localhost:8080`](http://localhost:8080) (log
 
 ## Build from Source
 
-You need to install `llvm`.
+You need to install `llvm` and linux headers.
 
 ```sh
 git clone https://github.com/albansiffer/xdprobe.git

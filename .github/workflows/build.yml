@@ -24,8 +24,8 @@ jobs:
       - name: Install tailwind
         run: bun install
 
-      - name: Install llvm
-        run: sudo apt-get update && sudo apt-get install -y llvm
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y llvm linux-headers-$(uname -r) gcc-multilib
 
       - name: Build from scratch
         run: make cleanall && make
