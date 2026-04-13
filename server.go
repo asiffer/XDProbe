@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"html/template"
 	"mime"
+	"net"
+	"strings"
 
 	"net/http"
 	"sync"
@@ -147,6 +149,20 @@ func serve(addr string, channel <-chan *Event) error {
 
 	mux.Handle(LOGIN_ROUTE, http.HandlerFunc(auth.Login))
 	mux.Handle(LOGOUT_ROUTE, http.HandlerFunc(auth.Logout))
-	sv := &http.Server{Addr: addr, Handler: http.NewCrossOriginProtection().Handler(auth.RequireAuth(mux))}
-	return sv.ListenAndServe()
+
+	sv := &http.Server{Handler: http.NewCrossOriginProtection().Handler(auth.RequireAuth(mux))}
+
+	if strings.Contains(addr, ":") {
+		// tcp socket
+		sv.Addr = addr
+		return sv.ListenAndServe()
+	} else {
+		// unix socket
+		conn, err := net.Listen("unix", addr)
+		if err != nil {
+			return err
+		}
+		return sv.Serve(conn)
+	}
+
 }

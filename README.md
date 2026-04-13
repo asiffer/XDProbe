@@ -32,7 +32,13 @@ The web UI is available at [`http://localhost:8080`](http://localhost:8080) (log
 
 ## Build from Source
 
-You need to install `llvm` and linux headers.
+You need to install few system dependencies notably to compile the XDP hook.
+```sh
+sudo apt-get update
+sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r) gcc-multilib
+```
+
+Then you can clone the repo, install tailwind through `bun` (or any other package manager) and run the the build process.
 
 ```sh
 git clone https://github.com/albansiffer/xdprobe.git
