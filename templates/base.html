@@ -1,0 +1,22 @@
+{{define "base"}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{{block "title" .}}XDProbe{{end}}</title>
+    <link rel="stylesheet" href="/assets/index.css" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <script defer src="/assets/alpine.js"></script>
+    {{block "head" .}}{{end}}
+  </head>
+  <body
+    x-data
+    @keydown.window.ctrl.d.prevent="$store.theme.toggle()"
+    class="relative h-screen w-screen overflow-hidden p-0 m-0 bg-background text-foreground font-sans"
+  >
+    {{block "body" .}}{{end}}
+  </body>
+  {{template "partials/dark" .}}
+</html>
+{{end}}

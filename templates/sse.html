@@ -1,0 +1,61 @@
+{{ define "partials/sse" }}
+<script>
+  function getHexCenters(points, resolution) {
+    const seen = new Set();
+    return points.reduce((acc, p) => {
+      const cell = h3.latLngToCell(p.lat, p.lon, resolution);
+      if (!seen.has(cell)) {
+        seen.add(cell);
+        const [lat, lon] = h3.cellToLatLng(cell);
+        acc.push({ ...p, lat: lat, lon: lon });
+      }
+      return acc;
+    }, []);
+  }
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("data", {
+      probes: [],
+      rings: [],
+      connected: false,
+      maxSize: 20,
+
+      setProbes(probes) {
+        this.probes = probes;
+      },
+
+      setRings(rings) {
+        this.rings = rings;
+      },
+
+      setConnected(status) {
+        this.connected = status;
+      },
+
+      init() {
+        const source = new EventSource("/live", { withCredentials: true });
+        source.onopen = () => this.setConnected(true);
+
+        source.onerror = (e) => {
+          console.log("EventSource failed:", e);
+        };
+
+        source.addEventListener("probe", (event) => {
+          const parsed = JSON.parse(event.data);
+          const valid = parsed.sources
+            .filter((item) => item.lat && item.lon)
+            .map((item) => ({ ...item, timestamp: event.timeStamp }));
+          if (valid.length > 0) {
+            this.setProbes([...valid, ...this.probes].slice(0, this.maxSize));
+            this.setRings(
+              [...getHexCenters(valid, 3), ...this.rings].slice(
+                0,
+                this.maxSize,
+              ),
+            );
+          }
+        });
+      },
+    });
+  });
+</script>
+{{ end }}

@@ -1,0 +1,29 @@
+{{ define "partials/logs" }}
+<aside class="absolute right-0 top-0 h-screen w-full max-w-sm px-6">
+  <div class="h-full w-full flex flex-col justify-center">
+    <ul class="relative h-3/4 w-full overflow-hidden -translate-y-21">
+      <template
+        x-for="(probe,i) in $store.data.probes"
+        :key="`${probe.ip}-${probe.timestamp}`"
+      >
+        <li
+          x-data="{ shown: false }"
+          x-init="$nextTick(() => shown = true)"
+          x-show="shown"
+          class="absolute top-21 left-0 w-full p-4 bg-muted rounded-lg flex flex-col transition-transform animate-stack-in duration-300"
+          :style="`transform: translateY(${i*85}px)`"
+        >
+          <h3 class="font-semibold font-mono" x-text="probe.ip"></h3>
+          <p class="text-muted-foreground text-sm">
+            <span x-text="probe.city"></span>,
+            <span x-text="probe.country"></span>
+          </p>
+        </li>
+      </template>
+      <li
+        class="absolute bottom-0 left-0 w-full h-21 bg-linear-to-b from-background/0 to-background z-20"
+      ></li>
+    </ul>
+  </div>
+</aside>
+{{ end }}

@@ -1,0 +1,19 @@
+{
+  "name": "xdprobe",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tailwindcss -i tailwind/input.css -o assets/index.css --watch",
+    "build": "tailwindcss -i tailwind/input.css -o assets/index.css --minify"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@tailwindcss/cli": "^4.2.2",
+    "tailwindcss": "^4.2.2"
+  }
+}

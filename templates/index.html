@@ -1,0 +1,133 @@
+{{ define "head"}}
+<script src="/assets/globe.gl"></script>
+<script src="/assets/h3.js"></script>
+{{ end }}
+
+{{ define "body" }}
+
+{{ template "partials/header" . }}
+
+  <main id="globe" class="absolute top-0 left-0 w-full h-full"></main>
+  {{ template "partials/logs" . }}
+  <script>
+    // Globe is now available as a global variable
+    const mist = [
+      //   "#f9fafb", // mist-50
+      //   "#f0f4f5", // mist-100
+      "#dce5e6", // mist-200
+      "#c1cfd2", // mist-300
+      "#8da5a9", // mist-400
+      "#648085", // mist-500
+      "#4f676b", // mist-600
+      "#3d5155", // mist-700
+      "#2d3c3f", // mist-800
+    ];
+
+    const ringColor = [
+      // red
+      "rgba(220, 38, 38, 1)",
+      "rgba(220, 38, 38, 0.75)",
+      "rgba(220, 38, 38, 0.5)",
+      "rgba(220, 38, 38, 0.25)",
+      "rgba(220, 38, 38, 0)",
+    ];
+
+    const root = document.getElementById("globe");
+    const globe = new Globe(root, {
+      animateIn: true,
+      waitForGlobeReady: true,
+    })
+      .hexPolygonResolution(3)
+      .hexPolygonMargin(0.2)
+      .hexPolygonUseDots(false)
+      .hexPolygonColor((obj) => {
+        const id = obj.properties.ABBREV.charCodeAt(0) % mist.length;
+        return mist[id];
+      })
+      .hexBinPointLat("lat")
+      .hexBinPointLng("lon")
+      .hexBinResolution(3)
+      .hexTopColor(() => "#ef4444")
+      .hexSideColor(() => "#ef4444")
+      .hexBinMerge(false)
+      .hexAltitude(0.0025)
+      .hexBinPointWeight(1)
+      .hexLabel((obj) => {
+        const ips = obj.points.map((p) => p.ip).join("<br>")
+        // Return an HTML string as expected by react-globe.gl
+        return `
+          <div style="display: flex; flex-direction: column;">
+            <h1 style="font-weight: bold;">${obj.points[0].city} (${obj.points[0].country})</h1>
+            <div style="font-family: 'Geist Mono';">${ips}</div>
+          </div>
+        `
+      })
+      .ringLat("lat")
+      .ringLng("lon")
+      .ringColor(ringColor)
+      .ringMaxRadius((obj) => {
+        return Math.max(obj["count"] || 1, 6)
+      });
+
+    // load country polygons ------------------------------------------------
+    fetch("/assets/ne_110m_admin_0_countries.json")
+      .then((res) => res.json())
+      .then((countries) => {
+        globe.hexPolygonsData(countries.features);
+      });
+
+    // set globe material based on dark mode --------------------------------
+    const MeshPhongMaterial = globe.globeMaterial().constructor;
+    const lightMaterial = new MeshPhongMaterial({
+      color: "#ffffff",
+      opacity: 100,
+    });
+
+    const darkMaterial = new MeshPhongMaterial({
+      color: "#000000",
+      opacity: 100,
+    });
+
+    if (document.documentElement.classList.contains("dark")) {
+      globe.globeMaterial(darkMaterial).backgroundColor("#000000");
+    } else {
+      globe.globeMaterial(lightMaterial).backgroundColor("#FFFFFF");
+    }
+
+    // observe dark mode -----------------------------------------------------
+    document.addEventListener('alpine:initialized', () => {
+        // All stores and components are ready here
+        Alpine.effect(() => {
+          const store = Alpine.store("theme");
+          if (store.dark) {
+            globe.globeMaterial(darkMaterial).backgroundColor("#000000");
+          } else {
+            globe.globeMaterial(lightMaterial).backgroundColor("#FFFFFF");
+          }
+        });
+    })
+
+    // handle window resize --------------------------------------------------
+    let timeout = 0;
+    window.addEventListener("resize", () => {
+      const newSize = { width: window.innerWidth, height: window.innerHeight };
+      clearTimeout(timeout);
+      timeout = window.setTimeout(() => {
+        globe.width(newSize.width).height(newSize.height);
+      }, 100);
+    });
+
+    // handle data updates ---------------------------------------------------
+    document.addEventListener('alpine:initialized', () => {
+        // All stores and components are ready here
+        Alpine.effect(() => {
+          const store = Alpine.store("data");
+          globe.hexBinPointsData(store.probes).ringsData(store.rings);
+        });
+    })
+    
+  </script>
+</div>
+
+{{ template "partials/sse" . }}
+{{ end }}

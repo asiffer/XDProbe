@@ -1,0 +1,24 @@
+{{define "partials/dark"}}
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("theme", {
+      dark:
+        localStorage.getItem("theme") === "dark" ||
+        (!localStorage.getItem("theme") &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches),
+
+      toggle() {
+        this.dark = !this.dark;
+        localStorage.setItem("theme", this.dark ? "dark" : "light");
+      },
+
+      init() {
+        // Sync to <html> class whenever it changes
+        Alpine.effect(() => {
+          document.documentElement.classList.toggle("dark", this.dark);
+        });
+      },
+    });
+  });
+</script>
+{{end}}
