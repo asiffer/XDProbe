@@ -49,7 +49,7 @@ All flags can also be set via environment variables prefixed with `XDPROBE_`.
 You can run an all-in-one installation script that will download everything and install a systemd service.
 
 ```sh
-curl -sL https://raw.githubusercontent.com/asiffer/xdprobe/main/systemd/install.sh | sh
+curl -sL https://raw.githubusercontent.com/asiffer/xdprobe/master/systemd/install.sh | sh
 ```
 
 ## Build from Source
