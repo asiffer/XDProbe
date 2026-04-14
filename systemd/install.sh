@@ -30,18 +30,17 @@ install() {
     (curl -sL https://download.db-ip.com/free/dbip-city-lite-2026-04.mmdb.gz | gzip -d | sudo tee /var/lib/xdprobe/geoip.mmdb > /dev/null && ok) || ko
 
     # prepare socket directory
-    log "Preparing socket directory at /run/xdprobe"
     sudo mkdir -p /run/xdprobe
 
     # generate config
     log "Generating xdprobe configuration file at /etc/sysconfig/xdprobe"
     STRONG_PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
     (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP_DB=%s\nXDPROBE_ADDR=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe.sock" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
-    printf "\033[1mGenerated password: %s\n\033[0m" "$STRONG_PASSWORD"
+    printf "\n\033[1mGenerated password: %s\033[0m" "$STRONG_PASSWORD"
 
     # create dedicated user (if it doesn't exist) and set permissions
     log "Creating dedicated user 'xdprobe' and setting permissions"
-    (id xdprobe >/dev/null || sudo useradd --system --no-create-home --shell /usr/sbin/nologin xdprobe && ok) || ko
+    (id xdprobe 2>/dev/null || sudo useradd --system --no-create-home --shell /usr/sbin/nologin xdprobe && ok) || ko
     sudo chown xdprobe:xdprobe /usr/local/bin/xdprobe
     sudo chown -R xdprobe:xdprobe /var/lib/xdprobe
     sudo chown xdprobe:xdprobe /run/xdprobe
