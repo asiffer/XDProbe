@@ -66,14 +66,11 @@ uninstall() {
 }
 
 case "$1" in
-    install)
-        install
-        ;;
     uninstall)
         uninstall
         ;;
     *)
-        echo "Usage: $0 {install|uninstall}"
+        echo "Usage: $0 [uninstall]"
         exit 1
         ;;
 esac
