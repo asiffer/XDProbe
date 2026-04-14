@@ -34,16 +34,17 @@ install() {
 
     # generate config
     log "Generating xdprobe configuration file at /etc/sysconfig/xdprobe"
+    IFACE=$(ip -o route get 8.8.8.8 | awk '{print $5}')
     STRONG_PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
-    (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP_DB=%s\nXDPROBE_ADDR=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe.sock" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
-    printf "\n\033[1mGenerated password: %s\033[0m" "$STRONG_PASSWORD"
+    (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP_DB=%s\nXDPROBE_ADDR=%s\nXDPROBE_NIC=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe/xdprobe.sock" "$IFACE" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
+    printf "\n\033[1mGenerated password: %s\033[0m" "$STRONG_PASSWORD" 
 
     # create dedicated user (if it doesn't exist) and set permissions
     log "Creating dedicated user 'xdprobe' and setting permissions"
     (id xdprobe 2>/dev/null || sudo useradd --system --no-create-home --shell /usr/sbin/nologin xdprobe && ok) || ko
     sudo chown xdprobe:xdprobe /usr/local/bin/xdprobe
     sudo chown -R xdprobe:xdprobe /var/lib/xdprobe
-    sudo chown xdprobe:xdprobe /run/xdprobe
+    sudo chown -R xdprobe:xdprobe /run/xdprobe
     sudo chown xdprobe:xdprobe /etc/sysconfig/xdprobe
     sudo chmod 600 /etc/sysconfig/xdprobe
     
