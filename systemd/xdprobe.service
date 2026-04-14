@@ -9,7 +9,7 @@ Type=simple
 User=xdprobe
 Group=xdprobe
 ExecStart=/usr/local/bin/xdprobe
-ExecStartPre=-=rm -f /run/xdprobe/xdprobe.sock
+ExecStartPre=-rm -f /run/xdprobe/xdprobe.sock
 Restart=on-failure
 RestartSec=5
 TimeoutStartSec=10
