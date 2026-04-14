@@ -51,7 +51,7 @@ install() {
 
     # enable and run the service
     log "Enabling and starting xdprobe systemd service"
-    (sudo systemctl daemon-reload && sudo systemctl enable xdprobe && sudo systemctl start xdprobe && ok) || ko
+    (sudo systemctl daemon-reload && sudo systemctl enable xdprobe && sudo systemctl start xdprobe && ok && printf "\n") || ko
 }
 
 uninstall() {
@@ -62,7 +62,7 @@ uninstall() {
     (sudo rm -rf /usr/local/bin/xdprobe /etc/sysconfig/xdprobe /var/lib/xdprobe /run/xdprobe && ok) || ko
 
     log "Removing dedicated user 'xdprobe'"
-    (sudo userdel xdprobe && ok) || ko
+    (sudo userdel xdprobe && ok && printf "\n") || ko
 }
 
 case "$1" in
