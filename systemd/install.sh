@@ -1,0 +1,75 @@
+#!/bin/sh
+
+set -e
+
+ok() {
+    printf "\033[32mOK\033[0m\n"
+}
+
+ko() {
+    printf "\033[31mKO\033[0m\n"
+}
+
+install() {
+    # download the binary 
+    printf "Installing xdprobe to /usr/local/bin/xdprobe"
+    (sudo curl -sL https://github.com/asiffer/xdprobe/releases/latest/download/xdprobe -o /usr/local/bin/xdprobe && ok) || ko
+    sudo chmod +x /usr/local/bin/xdprobe
+
+    # download the systemd service file
+    printf "Installing xdprobe systemd service file to /etc/systemd/system/xdprobe.service"
+    (sudo curl -sL https://raw.githubusercontent.com/asiffer/xdprobe/main/systemd/xdprobe.service -o /etc/systemd/system/xdprobe.service && ok) || ko
+
+    # download geoip database
+    printf "Downloading GeoIP database to /var/lib/xdprobe/geoip.mmdb"
+    sudo mkdir -p /var/lib/xdprobe
+    (curl -sL https://download.db-ip.com/free/dbip-city-lite-2026-04.mmdb.gz | gzip -d | sudo tee /var/lib/xdprobe/geoip.mmdb > /dev/null && ok) || ko
+
+    # prepare socket directory
+    sudo mkdir -p /run/xdprobe
+
+    # generate config
+    printf "Generating xdprobe configuration file at /etc/sysconfig/xdprobe"
+    STRONG_PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
+    (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP_DB=%s\nXDPROBE_ADDR=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe.sock" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
+    printf "\033[1mGenerated password: %s\n\033[0m" "$STRONG_PASSWORD"
+
+    # create dedicated user (if it doesn't exist) and set permissions
+    printf "Creating dedicated user 'xdprobe' and setting permissions"
+    (id xdprobe >/dev/null || sudo useradd --system --no-create-home --shell /usr/sbin/nologin xdprobe && ok) || ko
+    sudo chown xdprobe:xdprobe /usr/local/bin/xdprobe
+    sudo chown -R xdprobe:xdprobe /var/lib/xdprobe
+    sudo chown xdprobe:xdprobe /run/xdprobe
+    sudo chown xdprobe:xdprobe /etc/sysconfig/xdprobe
+    sudo chmod 600 /etc/sysconfig/xdprobe
+    
+
+    # enable and run the service
+    printf "Enabling and starting xdprobe systemd service"
+    (sudo systemctl daemon-reload && sudo systemctl enable xdprobe && sudo systemctl start xdprobe && ok) || ko
+}
+
+uninstall() {
+    printf "Uninstalling xdprobe service"
+    (sudo systemctl stop xdprobe && sudo systemctl disable xdprobe && sudo rm -f /etc/systemd/system/xdprobe.service && ok) || ko
+
+    printf "Removing xdprobe binary and data files"
+    (sudo rm -rf /usr/local/bin/xdprobe /etc/sysconfig/xdprobe /var/lib/xdprobe /run/xdprobe && ok) || ko
+
+    printf "Removing dedicated user 'xdprobe'"
+    (sudo userdel xdprobe && ok) || ko
+}
+
+case "$1" in
+    install)
+        install
+        ;;
+    uninstall)
+        uninstall
+        ;;
+    *)
+        echo "Usage: $0 {install|uninstall}"
+        exit 1
+        ;;
+esac
+

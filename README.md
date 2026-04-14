@@ -11,7 +11,7 @@ XDP-based ingress network traffic monitor. Attaches an eBPF/XDP program to a net
 Download the latest binary,
 
 ```sh
-curl -L https://github.com/albansiffer/xdprobe/releases/latest/download/xdprobe -o xdprobe
+curl -L https://github.com/asiffer/xdprobe/releases/latest/download/xdprobe -o xdprobe
 chmod +x xdprobe
 ```
 
@@ -30,25 +30,6 @@ sudo ./xdprobe --interface eth0 --geoip geoip.mmdb
 The web UI is available at [`http://localhost:8080`](http://localhost:8080) (login: `admin` / `password`).
 
 
-## Build from Source
-
-You need to install few system dependencies notably to compile the XDP hook.
-```sh
-sudo apt-get update
-sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r) gcc-multilib
-```
-
-Then you can clone the repo, install tailwind through `bun` (or any other package manager) and run the the build process.
-
-```sh
-git clone https://github.com/albansiffer/xdprobe.git
-cd xdprobe
-bun install
-make
-```
-
-The resulting `xdprobe` binary embeds everything beyond a GeoIP database.
-
 ## Configuration
 
 All flags can also be set via environment variables prefixed with `XDPROBE_`.
@@ -62,6 +43,35 @@ All flags can also be set via environment variables prefixed with `XDPROBE_`.
 | `-u`, `--username`  | `XDPROBE_USERNAME` | `admin`      | Web UI username                |
 | `-p`, `--password`  | `XDPROBE_PASSWORD` | `password`   | Web UI password                |
 | `-k`, `--insecure`  | `XDPROBE_INSECURE` | `false`      | Disable authentication         |
+
+## Service
+
+You can run an all-in-one installation script that will download everything and install a systemd service.
+
+```sh
+curl -sL https://raw.githubusercontent.com/asiffer/xdprobe/main/systemd/install.sh | sh
+```
+
+## Build from Source
+
+You need to install few system dependencies notably to compile the XDP hook.
+```sh
+sudo apt-get update
+sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r) gcc-multilib
+```
+
+Then you can clone the repo, install tailwind through `bun` (or any other package manager) and run the the build process.
+
+```sh
+git clone https://github.com/asiffer/xdprobe.git
+cd xdprobe
+bun install
+make
+```
+
+The resulting `xdprobe` binary embeds everything beyond a GeoIP database.
+
+
 
 ## Stack
 

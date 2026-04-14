@@ -1,0 +1,45 @@
+[Unit]
+Description=XDProbe as a service
+Documentation=https://github.com/asiffer/XDProbe
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xdprobe
+Group=xdprobe
+ExecStart=/usr/local/bin/xdprobe
+ExecStartPre=-=rm -f /run/xdprobe.sock
+Restart=on-failure
+EnvironmentFile=-/etc/sysconfig/xdprobe
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=xdprobe
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/run/xdprobe.sock
+CapabilityBoundingSet=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_ADMIN
+LockPersonality=yes
+ProtectKernelTunables=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+PrivateDevices=yes
+ProtectHostname=yes
+ProtectKernelModules=yes
+ProtectProc=invisible
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
