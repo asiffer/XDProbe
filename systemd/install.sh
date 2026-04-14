@@ -70,8 +70,7 @@ case "$1" in
         uninstall
         ;;
     *)
-        echo "Usage: $0 [uninstall]"
-        exit 1
+        install
         ;;
 esac
 
