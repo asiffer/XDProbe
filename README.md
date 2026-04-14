@@ -52,6 +52,35 @@ You can run an all-in-one installation script that will download everything and 
 curl -sL https://raw.githubusercontent.com/asiffer/xdprobe/master/systemd/install.sh | sh
 ```
 
+In this setup, `xdprobe` http server listens on unix socket (`/run/xdprobe/xdprobe.sock`) so its traffic is not collected by the XDP hook.
+
+Depending on your needs, you can either change this config in the script (and in the service file) or pipe that socket with `socat` for instance:
+```sh
+socat TCP-LISTEN:8080,fork UNIX-CONNECT:/run/xdprobe/xdprobe.sock
+```
+
+Also if you want to expose the ui through a docker container, you can mount the socket in a Caddy instance with a proper config.
+
+```Caddyfile
+# Caddyfile
+{
+    auto_https off
+}
+
+:80 {
+    reverse_proxy unix//run/xdprobe.sock
+}
+```
+
+```sh
+docker run \
+    --rm -it \
+    -v /run/xdprobe/xdprobe.sock:/run/xdprobe.sock \
+    -v ./Caddyfile:/etc/caddy/Caddyfile \
+    caddy@latest
+```
+
+
 ## Build from Source
 
 You need to install few system dependencies notably to compile the XDP hook.
