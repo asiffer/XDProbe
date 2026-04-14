@@ -9,7 +9,7 @@ Type=simple
 User=xdprobe
 Group=xdprobe
 ExecStart=/usr/local/bin/xdprobe
-ExecStartPre=-=rm -f /run/xdprobe.sock
+ExecStartPre=-=rm -f /run/xdprobe/xdprobe.sock
 Restart=on-failure
 EnvironmentFile=-/etc/sysconfig/xdprobe
 
@@ -23,7 +23,7 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/run/xdprobe.sock
+ReadWritePaths=/run/xdprobe/xdprobe.sock
 CapabilityBoundingSet=CAP_NET_ADMIN
 AmbientCapabilities=CAP_NET_ADMIN
 LockPersonality=yes
