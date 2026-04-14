@@ -29,14 +29,11 @@ install() {
     sudo mkdir -p /var/lib/xdprobe
     (curl -sL https://download.db-ip.com/free/dbip-city-lite-2026-04.mmdb.gz | gzip -d | sudo tee /var/lib/xdprobe/geoip.mmdb > /dev/null && ok) || ko
 
-    # prepare socket directory
-    sudo mkdir -p /run/xdprobe
-
     # generate config
     log "Generating xdprobe configuration file at /etc/sysconfig/xdprobe"
     IFACE=$(ip -o route get 8.8.8.8 | awk '{print $5}')
     STRONG_PASSWORD=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 32)
-    (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP_DB=%s\nXDPROBE_ADDR=%s\nXDPROBE_NIC=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe/xdprobe.sock" "$IFACE" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
+    (printf "XDPROBE_PASSWORD=%s\nXDPROBE_GEOIP=%s\nXDPROBE_ADDR=%s\nXDPROBE_NIC=%s\n" "$STRONG_PASSWORD" "/var/lib/xdprobe/geoip.mmdb" "/run/xdprobe/xdprobe.sock" "$IFACE" | sudo tee /etc/sysconfig/xdprobe > /dev/null && ok) || ko
     printf "\n\033[1mGenerated password: %s\033[0m" "$STRONG_PASSWORD" 
 
     # create dedicated user (if it doesn't exist) and set permissions
