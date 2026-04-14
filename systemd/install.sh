@@ -14,6 +14,11 @@ log() {
     printf "\n%-50s " "$1"
 }
 
+service_exists() {
+    files=$(systemctl list-unit-files xdprobe.service | grep "unit files listed" | awk '{print $1}')
+    [ "$files" != "0" ]
+}
+
 install() {
     # download the binary 
     log "Installing xdprobe to /usr/local/bin/xdprobe"
@@ -41,7 +46,6 @@ install() {
     (id xdprobe 2>/dev/null || sudo useradd --system --no-create-home --shell /usr/sbin/nologin xdprobe && ok) || ko
     sudo chown xdprobe:xdprobe /usr/local/bin/xdprobe
     sudo chown -R xdprobe:xdprobe /var/lib/xdprobe
-    sudo chown -R xdprobe:xdprobe /run/xdprobe
     sudo chown xdprobe:xdprobe /etc/sysconfig/xdprobe
     sudo chmod 600 /etc/sysconfig/xdprobe
     
@@ -53,13 +57,13 @@ install() {
 
 uninstall() {
     log "Uninstalling xdprobe service"
-    (sudo systemctl stop xdprobe && sudo systemctl disable xdprobe && sudo rm -f /etc/systemd/system/xdprobe.service && ok) || ko
+    ( ! service_exists || (sudo systemctl stop xdprobe && sudo systemctl disable xdprobe && sudo rm -f /etc/systemd/system/xdprobe.service) && ok) || ko
 
     log "Removing xdprobe binary and data files"
     (sudo rm -rf /usr/local/bin/xdprobe /etc/sysconfig/xdprobe /var/lib/xdprobe /run/xdprobe && ok) || ko
 
     log "Removing dedicated user 'xdprobe'"
-    (sudo userdel xdprobe && ok && printf "\n") || (ko && printf "\n") 
+    ( ( ! id xdprobe 2>/dev/null || sudo userdel xdprobe ) && ok && printf "\n") || (ko && printf "\n") 
 }
 
 case "$1" in
