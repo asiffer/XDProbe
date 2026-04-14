@@ -9,12 +9,17 @@ Type=simple
 User=xdprobe
 Group=xdprobe
 ExecStart=/usr/local/bin/xdprobe
-ExecStartPre=-rm -f /run/xdprobe/xdprobe.sock
 Restart=on-failure
 RestartSec=5
 TimeoutStartSec=10
 TimeoutStopSec=10
 EnvironmentFile=-/etc/sysconfig/xdprobe
+# bpf map requirement
+LimitMEMLOCK=infinity
+
+# /run directory (automatically removed on stop)
+RuntimeDirectory=xdprobe
+RuntimeDirectoryMode=0755
 
 # Logging
 StandardOutput=journal
@@ -22,13 +27,17 @@ StandardError=journal
 SyslogIdentifier=xdprobe
 
 # Hardening
+RemoveIPC=true
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/run/xdprobe/xdprobe.sock
-CapabilityBoundingSet=CAP_NET_ADMIN
-AmbientCapabilities=CAP_NET_ADMIN
+RuntimeDirectory=xdprobe
+RuntimeDirectoryMode=0755
+ReadWritePaths=/run/xdprobe
+# CAP_SYS_ADMIN is required because of pointer arithmetic in eBPF programs.
+CapabilityBoundingSet=CAP_SYS_RESOURCE CAP_BPF CAP_NET_ADMIN CAP_SYS_ADMIN
+AmbientCapabilities=CAP_SYS_RESOURCE CAP_BPF CAP_NET_ADMIN CAP_SYS_ADMIN
 LockPersonality=yes
 ProtectKernelTunables=yes
 ProtectKernelLogs=yes
@@ -38,11 +47,15 @@ PrivateDevices=yes
 ProtectHostname=yes
 ProtectKernelModules=yes
 ProtectProc=invisible
-RestrictAddressFamilies=AF_UNIX
+ProcSubset=pid
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
 RestrictNamespaces=yes
 RestrictRealtime=yes
 RestrictSUIDSGID=yes
-UMask=0077
+UMask=0111
+SystemCallFilter=~@debug @obsolete @cpu-emulation @clock @reboot @swap @raw-io @mount @resources @module
+SystemCallArchitectures=native
+
 
 [Install]
 WantedBy=multi-user.target
