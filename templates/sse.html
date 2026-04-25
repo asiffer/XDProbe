@@ -45,12 +45,16 @@
             .filter((item) => item.lat && item.lon)
             .map((item) => ({ ...item, timestamp: event.timeStamp }));
           if (valid.length > 0) {
+            console.log("Received probe:", valid);
             this.setProbes([...valid, ...this.probes].slice(0, this.maxSize));
             this.setRings(
-              [...getHexCenters(valid, 3), ...this.rings].slice(
-                0,
-                this.maxSize,
-              ),
+              [
+                ...getHexCenters(
+                  valid.filter((item) => item.city !== "LAN"), // only show rings for non-LAN probes
+                  3,
+                ),
+                ...this.rings,
+              ].slice(0, this.maxSize),
             );
           }
         });

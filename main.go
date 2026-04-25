@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/asiffer/xdprobe/kernel"
@@ -54,6 +55,15 @@ func main() {
 	defer func() { objs.Close(); log.Info().Msg("Unloaded eBPF objects") }()
 	log.Info().Msg("Loaded eBPF program")
 
+	// load policies from disk
+	if err := os.MkdirAll(filepath.Dir(policiesFile), 0755); err != nil {
+		log.Fatal().Err(err).Msg("Failed to create policies directory")
+	}
+	if err := loadFromDisk(objs.IpPolicies, policiesFile); err != nil {
+		log.Fatal().Err(err).Msg("Failed to load policies from disk")
+	}
+	log.Info().Str("file", policiesFile).Msg("Loaded policies from disk")
+
 	// attach program to the network interface
 	link, err := link.AttachXDP(link.XDPOptions{
 		Program:   objs.Xdprobe,
@@ -67,7 +77,7 @@ func main() {
 	// start the HTTP server
 	channel := make(chan *Event, 10)
 	errCh := make(chan error, 1)
-	go func() { errCh <- serve(addr, channel) }()
+	go func() { errCh <- serve(addr, channel, &objs) }()
 	log.Info().Str("addr", "http://"+addr).Msg("Started HTTP server")
 
 	// graceful shutdown
@@ -87,11 +97,11 @@ func main() {
 			// if err != nil {
 			// 	log.Fatal("Map lookup:", err)
 			// }
-			ip4, err := updateIPs(&objs)
+			data, err := collectData(&objs)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Map lookup failed")
 			}
-			event := NewEvent(db, ip4)
+			event := NewEvent(db, data)
 			if len(event.Sources) == 0 {
 				continue
 			}

@@ -1,0 +1,205 @@
+{{ define "partials/policy" }}
+<dialog
+  class="m-auto bg-transparent"
+  x-ref="dialog"
+  x-effect="$store.policy.react($store.policy.showModal, $refs.dialog)"
+  @click="if ($event.target === $el) $store.policy.closeModal()"
+>
+  <div
+    class="w-full max-w-sm shadow rounded-lg bg-background p-6 overflow-hidden"
+  >
+    <hgroup class="w-full flex flex-col gap-0">
+      <h2 class="font-semibold text-foreground">IP Policy</h2>
+      <p class="text-sm text-muted-foreground">
+        Allow, block or ignore traffic from specific IP addresses.
+      </p>
+    </hgroup>
+    <form
+      class="flex flex-col gap-4 mt-6 text-sm"
+      @submit.prevent="$store.policy.setPolicy($refs.policyIP.value, $refs.policyAction.value).catch(err => alert(err)).then(() => $store.policy.closeModal())"
+    >
+      <fieldset class="w-full flex flex-row gap-4 items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-ethernet-port-icon lucide-ethernet-port"
+        >
+          <path
+            d="m15 20 3-3h2a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2l3 3z"
+          />
+          <path d="M6 8v1" />
+          <path d="M10 8v1" />
+          <path d="M14 8v1" />
+          <path d="M18 8v1" />
+        </svg>
+        <input
+          x-ref="policyIP"
+          type="text"
+          id="ip"
+          name="ip"
+          class="font-mono w-full"
+          required
+          placeholder="192.168.0.1"
+          pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+          :value="$store.policy.modalIP"
+        />
+      </fieldset>
+      <fieldset class="w-full flex flex-row gap-4 items-center">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="lucide lucide-shield-question-mark-icon lucide-shield-question-mark"
+        >
+          <path
+            d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+          />
+          <path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </svg>
+        <select
+          x-ref="policyAction"
+          id="action"
+          name="action"
+          class="w-full"
+          required
+        >
+          <option value="pass">Pass</option>
+          <option value="block" selected>Block</option>
+          <option value="ignore">Ignore</option>
+        </select>
+      </fieldset>
+      <button
+        type="submit"
+        class="primary block w-full mt-2"
+      >
+        Update
+      </button>
+    </form>
+  </div>
+</dialog>
+<aside
+  class="absolute left-0 h-screen w-full max-w-md px-6 z-10 flex flex-col justify-center"
+>
+  <div
+    class="w-full flex flex-col gap-4 text-foreground bg-muted rounded-lg p-6 max-h-2/3 overflow-hidden"
+  >
+    <div class="flex flex-row justify-between items-center">
+      <h2 class="font-semibold text-muted-foreground">Policies</h2>
+    <div>
+      <button class="icon hover:bg-foreground/10" @click="$store.policy.openModal('')" title="Add new policy">
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-icon lucide-plus">
+          <path d="M5 12h14"/>
+          <path d="M12 5v14"/>
+        </svg>
+      </button> 
+    </div>
+    </div>
+    <table class="text-sm">
+      <thead>
+        <tr class="border-b border-b-muted-foreground">
+          <th class="text-right">IP</th>
+          <th class="text-right pl-2">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="policy in $store.policy.policies" :key="policy.ip">
+          <tr>
+            <td x-text="policy.ip" class="font-mono text-right"></td>
+            <td class="text-right pl-2 py-1">
+              <select
+                class="h-9 w-full rounded-md border border-muted outline-none focus:border-foreground px-3 py-1 invalid:not(:placeholder-shown)]:border-destructive hover:border-foreground/20 transition-colors duration-100"
+                @change="$store.policy.setPolicy(policy.ip, $event.target.value).catch(err => alert(err))"
+              >
+                <option value="pass" :selected="policy.action === 'pass'">
+                  Pass
+                </option>
+                <option value="block" :selected="policy.action === 'block'">
+                  Block
+                </option>
+                <option value="ignore" :selected="policy.action === 'ignore'">
+                  Ignore
+                </option>
+              </select>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <p x-show="$store.policy.policies.length === 0" class="text-center text-sm text-muted-foreground italic">
+      No policies set.
+    </p>
+</aside>
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.store("policy", {
+      showModal: false,
+      modalIP: "",
+      policies: [],
+
+      react(show, dialog) {
+        if (show) {
+          dialog.showModal();
+        } else {
+          dialog.close();
+        }
+      },
+
+      openModal(ip) {
+        this.modalIP = ip;
+        this.showModal = true;
+      },
+
+      closeModal() {
+        this.modalIP = "";
+        this.showModal = false;
+      },
+
+      async setPolicy(ip, action) {
+        const response = await fetch("/policy", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ip, action }),
+        });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        await this.listPolicies();
+      },
+
+      async listPolicies() {
+        const response = await fetch("/policy", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        this.policies = await response.json();
+        console.log(
+          "Loaded policies:",
+          this.policies.map((p) => p),
+        );
+      },
+
+      init() {
+        this.listPolicies().catch((err) => console.error("Failed to load policies:", err));
+      },
+    });
+  });
+</script>
+{{ end }}

@@ -46,8 +46,26 @@ kbd {
   @apply bg-muted rounded shadow-sm text-muted-foreground font-mono text-xs px-1.5 py-0.5;
 }
 
+a[type="button"],
 button {
-  @apply cursor-pointer text-sm font-medium transition-colors duration-100;
+  @apply h-8 cursor-pointer text-sm font-medium transition-colors duration-100 rounded;
+}
+
+button.primary {
+  @apply bg-foreground text-background hover:bg-foreground/90 py-2 px-4 shadow;
+}
+
+a[type="button"].icon,
+button.icon {
+  @apply aspect-square flex justify-center items-center;
+}
+
+input[type="text"] {
+  @apply h-8 rounded-md border border-muted outline-none focus:border-foreground px-3 py-1 user-invalid:not-focus:not-placeholder-shown:border-destructive user-invalid:not-focus:not-placeholder-shown:hover:border-destructive/80 user-invalid:text-destructive focus:text-foreground hover:border-foreground/20 transition-colors duration-100 placeholder:text-muted-foreground;
+}
+
+select {
+  @apply h-8 rounded-md border border-muted outline-none focus:border-foreground px-3 py-1 invalid:not-placeholder-shown:border-destructive hover:border-foreground/20 transition-colors duration-100;
 }
 
 @theme {

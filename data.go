@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"net"
 
 	"github.com/asiffer/xdprobe/kernel"
@@ -9,6 +8,13 @@ import (
 )
 
 var cpuCount = 0
+
+type Hit struct {
+	SrcIP   net.IP `json:"ip"`
+	DstPort uint16 `json:"port"`
+	Proto   uint8  `json:"proto"`
+	Count   uint64 `json:"count"`
+}
 
 func init() {
 	c, err := ebpf.PossibleCPU()
@@ -18,51 +24,39 @@ func init() {
 	cpuCount = c
 }
 
-func sum(array []uint64) uint64 {
-	s := uint64(0)
-	for _, v := range array {
-		s += v
-	}
-	return s
+func extractIPPorts(key uint64) (net.IP, uint16, uint8) {
+	// srcIP := intToIP(uint32(key >> 32))
+	srcIP := uint32ToIP(uint32(key >> 32))
+	dstPort := uint16(key & 0xFFFF)
+	proto := uint8((key >> 16) & 0xFF)
+	return srcIP, dstPort, proto
 }
 
-func intToIP(n uint32) net.IP {
-	ip := make(net.IP, 4)
-	binary.BigEndian.PutUint32(ip, n)
-	return ip
-}
+func collectData(objs *kernel.XDProbeObjects) (map[string][]Hit, error) {
+	// out := make(map[string]map[uint16]uint64)
+	out := make(map[string][]Hit)
+	toDelete := make([]uint64, 0, 100)
 
-func updatePorts(objs *kernel.XDProbeObjects) (map[uint16]uint64, error) {
-	out := make(map[uint16]uint64)
-	toDelete := make([]uint16, 0, 32)
-	it := objs.TcpDstPortCount.Iterate()
-	var p uint16
+	it := objs.SourcesCount.Iterate()
+	var key uint64
 	c := make([]uint64, 0, cpuCount)
-	for it.Next(&p, &c) {
-		out[p] = sum(c)
-		toDelete = append(toDelete, p)
+	for it.Next(&key, &c) {
+		// dstPort is 0 for IP-level stats
+		srcIP, dstPort, proto := extractIPPorts(key)
+		if _, ok := out[srcIP.String()]; !ok {
+			out[srcIP.String()] = make([]Hit, 0)
+		}
+		out[srcIP.String()] = append(out[srcIP.String()], Hit{
+			SrcIP:   srcIP,
+			DstPort: dstPort,
+			Proto:   proto,
+			Count:   sum(c),
+		})
+		toDelete = append(toDelete, key)
 	}
 	if err := it.Err(); err != nil {
 		return nil, err
 	}
-	_, err := objs.TcpDstPortCount.BatchDelete(toDelete, nil)
-	return out, err
-}
-
-func updateIPs(objs *kernel.XDProbeObjects) (map[string]uint64, error) {
-	out := make(map[string]uint64)
-	toDelete := make([]uint32, 0, 32)
-
-	it := objs.SrcIpCount.Iterate()
-	var ip uint32
-	c := make([]uint64, 0, cpuCount)
-	for it.Next(&ip, &c) {
-		out[intToIP(ip).String()] = sum(c)
-		toDelete = append(toDelete, ip)
-	}
-	if err := it.Err(); err != nil {
-		return nil, err
-	}
-	_, err := objs.SrcIpCount.BatchDelete(toDelete, nil)
+	_, err := objs.SourcesCount.BatchDelete(toDelete, nil)
 	return out, err
 }

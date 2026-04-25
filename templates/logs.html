@@ -1,27 +1,48 @@
 {{ define "partials/logs" }}
-<aside class="absolute right-0 top-0 h-screen w-full max-w-sm px-6">
+<aside class="absolute right-0 top-0 h-screen w-full max-w-md px-6">
   <div class="h-full w-full flex flex-col justify-center">
-    <ul class="relative h-3/4 w-full overflow-hidden -translate-y-21">
+    <ul
+      class="relative h-3/4 w-full overflow-hidden scroll-smooth flex flex-col"
+      x-ref="container"
+      x-effect="$store.data.length; $nextTick(() => $refs.container.scrollTop = $refs.container.scrollHeight)"
+    >
       <template
         x-for="(probe,i) in $store.data.probes"
         :key="`${probe.ip}-${probe.timestamp}`"
       >
         <li
           x-data="{ shown: false }"
-          x-init="$nextTick(() => shown = true)"
-          x-show="shown"
-          class="absolute top-21 left-0 w-full p-4 bg-muted rounded-lg flex flex-col transition-transform animate-stack-in duration-300"
-          :style="`transform: translateY(${i*85}px)`"
+          x-init="setTimeout(() => { shown = true }, i * 100)"
+          :class="shown ? 'max-h-40 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'"
+          class="shrink-0 overflow-hidden transition-all duration-500 ease-out"
         >
-          <h3 class="font-semibold font-mono" x-text="probe.ip"></h3>
-          <p class="text-muted-foreground text-sm">
-            <span x-text="probe.city"></span>,
-            <span x-text="probe.country"></span>
-          </p>
+          <div
+            class="cursor-pointer w-full p-4 bg-muted rounded-lg flex flex-row"
+            @click="$store.policy.openModal(probe.ip)"
+          >
+            <div class="flex flex-col gap-0 items-stretch">
+              <h3 class="font-semibold font-mono" x-text="probe.ip"></h3>
+              <p class="text-muted-foreground text-sm">
+                <span x-text="probe.city"></span>,
+                <span x-text="probe.country"></span>
+              </p>
+            </div>
+
+            <div class="grow flex flex-col gap-0 items-end font-mono text-sm">
+              <template x-if="probe.hits">
+                <template x-for="hit in probe.hits" :key="hit.port">
+                  <div
+                    x-text="hit.port + (hit.proto === 6 ? '/tcp' : hit.proto === 17 ? '/udp' : '')"
+                    class="text-muted-foreground"
+                  ></div>
+                </template>
+              </template>
+            </div>
+          </div>
         </li>
       </template>
       <li
-        class="absolute bottom-0 left-0 w-full h-21 bg-linear-to-b from-background/0 to-background z-20"
+        class="absolute bottom-0 left-0 w-full h-21 bg-linear-to-b from-background/0 to-background z-20 pointer-events-none"
       ></li>
     </ul>
   </div>

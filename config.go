@@ -16,13 +16,14 @@ import (
 const ENV_PREFIX = "XDPROBE_"
 
 var (
-	nicName  string = "lo"
-	addr     string = ":8080"
-	geoipdb  string
-	tick     time.Duration = time.Second
-	username string        = "admin"
-	password string        = "password"
-	insecure bool          = false
+	nicName      string = "lo"
+	addr         string = ":8080"
+	geoipdb      string
+	tick         time.Duration = time.Second
+	username     string        = "admin"
+	password     string        = "password"
+	insecure     bool          = false
+	policiesFile string        = "/etc/xdprobe/policies.json"
 )
 
 var log zerolog.Logger
@@ -87,11 +88,18 @@ func init() {
 			puzzle.WithDescription("Disable authentication"),
 			puzzle.WithEnvName(ENV_PREFIX+"INSECURE"),
 		),
+		puzzle.DefineVar(
+			k,
+			"policies-file",
+			&policiesFile,
+			puzzle.WithShortFlagName("f"),
+			puzzle.WithDescription("Path to policies file"),
+			puzzle.WithEnvName(ENV_PREFIX+"POLICIES"),
+		),
 	)
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func init() {

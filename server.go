@@ -2,15 +2,14 @@ package main
 
 import (
 	"embed"
-	"encoding/json"
-	"fmt"
 	"html/template"
 	"mime"
 	"net"
 	"strings"
 
 	"net/http"
-	"sync"
+
+	"github.com/asiffer/xdprobe/kernel"
 )
 
 //go:embed templates/*
@@ -32,6 +31,7 @@ type EventSource struct {
 	Continent string  `json:"continent,omitempty"`
 	Latitude  float64 `json:"lat,omitempty"`
 	Longitude float64 `json:"lon,omitempty"`
+	Hits      []Hit   `json:"hits,omitempty"`
 }
 
 type Event struct {
@@ -47,6 +47,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		"templates/index.html",
 		"templates/header.html",
 		"templates/logs.html",
+		"templates/policy.html",
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("parsing error")
@@ -59,72 +60,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type Broker struct {
-	clients map[chan []byte]struct{}
-	mu      sync.RWMutex
-}
-
-func NewBroker() *Broker {
-	return &Broker{clients: make(map[chan []byte]struct{})}
-}
-
-func (b *Broker) Subscribe() chan []byte {
-	ch := make(chan []byte, 64)
-	b.mu.Lock()
-	b.clients[ch] = struct{}{}
-	b.mu.Unlock()
-	return ch
-}
-
-func (b *Broker) Unsubscribe(ch chan []byte) {
-	b.mu.Lock()
-	delete(b.clients, ch)
-	close(ch)
-	b.mu.Unlock()
-}
-
-func (b *Broker) Publish(event *Event) {
-	data, err := json.Marshal(event)
-	if err != nil {
-		return
-	}
-
-	b.mu.RLock()
-	defer b.mu.RUnlock()
-
-	for ch := range b.clients {
-		select {
-		case ch <- data:
-		default:
-			// slow client, drop message
-		}
-	}
-}
-
-func (b *Broker) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	rc := http.NewResponseController(w)
-
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	ch := b.Subscribe()
-	defer b.Unsubscribe(ch)
-
-	for {
-		select {
-		case <-r.Context().Done():
-			return
-		case data := <-ch:
-			fmt.Fprintf(w, "event: probe\ndata: %s\n\n", data)
-			if err := rc.Flush(); err != nil {
-				return // client gone
-			}
-		}
-	}
-}
-
-func serve(addr string, channel <-chan *Event) error {
+func serve(addr string, channel <-chan *Event, objs *kernel.XDProbeObjects) error {
 	broker := NewBroker()
 	go func() {
 		for event := range channel {
@@ -138,6 +74,7 @@ func serve(addr string, channel <-chan *Event) error {
 	mux := http.NewServeMux()
 
 	mux.Handle("/live", broker)
+	mux.Handle("/policy", policyHandler(objs.IpPolicies))
 	// keep the prefix
 	mux.Handle("/assets/", http.FileServer(http.FS(assetsFS)))
 	mux.Handle("/", http.HandlerFunc(index))
