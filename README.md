@@ -2,7 +2,7 @@
 
 > *Who the hell hits my server?*
 
-XDP-based ingress network traffic monitor. Attaches an eBPF/XDP program to a network interface, enriches captured source IPs with GeoIP data, and streams them live to a web UI via SSE — including a 3D globe visualization.
+**XDProbe** is an [XDP](https://en.wikipedia.org/wiki/Express_Data_Path)-based network traffic monitor (including a simple IP firewall).
 
 ![screenshot](.github/screenshot.png)
 
