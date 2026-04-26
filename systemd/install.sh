@@ -50,7 +50,6 @@ install() {
     sudo chown xdprobe:xdprobe /etc/sysconfig/xdprobe
     sudo chmod 600 /etc/sysconfig/xdprobe
     
-
     # enable and run the service
     log "Enabling and starting xdprobe systemd service"
     (sudo systemctl daemon-reload && sudo systemctl enable xdprobe && sudo systemctl start xdprobe && ok && printf "\n") || (ko && printf "\n")
@@ -61,7 +60,7 @@ uninstall() {
     ( ! service_exists || (sudo systemctl stop xdprobe && sudo systemctl disable xdprobe && sudo rm -f /etc/systemd/system/xdprobe.service) && ok) || ko
 
     log "Removing xdprobe binary and data files"
-    (sudo rm -rf /usr/local/bin/xdprobe /etc/sysconfig/xdprobe /var/lib/xdprobe /run/xdprobe && ok) || ko
+    (sudo rm -rf /usr/local/bin/xdprobe /etc/sysconfig/xdprobe /var/lib/xdprobe /run/xdprobe /etc/xdprobe && ok) || ko
 
     log "Removing dedicated user 'xdprobe'"
     ( ( ! id xdprobe 2>/dev/null || sudo userdel xdprobe ) && ok && printf "\n") || (ko && printf "\n") 
