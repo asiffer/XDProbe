@@ -1,5 +1,7 @@
 # XDProbe
 
+[![Deploy](https://github.com/asiffer/XDProbe/actions/workflows/deploy.yml/badge.svg)](https://github.com/asiffer/XDProbe/actions/workflows/deploy.yml)
+
 > *Who the hell hits my server?*
 
 **XDProbe** is an [XDP](https://en.wikipedia.org/wiki/Express_Data_Path)-based network traffic monitor (including a simple IP firewall).
