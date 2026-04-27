@@ -1,0 +1,41 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install tailwind
+        run: bun install
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang llvm libbpf-dev linux-tools-common linux-headers-$(uname -r) gcc-multilib
+
+      - name: Build from scratch
+        run: make cleanall && make
+
+      - name: Run install script
+        run: systemd/install.sh
+        env:
+          XDPROBE_LOCAL: 1
+      
+      - name: Test installation
+        run: systemd/test_install.sh
+
+      - name: Test API
+        run: systemd/test_api.sh
