@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/hex"
 	"html/template"
 	"mime"
 	"net"
@@ -68,24 +69,32 @@ func serve(addr string, channel <-chan *Event, objs *kernel.XDProbeObjects) erro
 		}
 	}()
 
-	auth := NewAuth(username, password)
+	hashPassword, err := hex.DecodeString(password)
+	if err != nil {
+		log.Error().Err(err).Msg("Fail to decode password hash")
+		return err
+	}
+	auth := NewAuth(username, hashPassword)
 
 	mime.AddExtensionType(".gl", "text/javascript")
 	mux := http.NewServeMux()
 
-	mux.Handle("/live", broker)
-	mux.Handle("/policy", policyHandler(objs.IpPolicies))
+	mux.Handle("GET "+LOGIN_ROUTE, http.HandlerFunc(auth.loginGet))
+	mux.Handle("POST "+LOGIN_ROUTE, http.HandlerFunc(auth.loginPost))
+	mux.Handle("POST "+LOGOUT_ROUTE, http.HandlerFunc(auth.Logout))
+
+	mux.Handle("GET /policy", getPolicyHandler(objs.IpPolicies))
+	mux.Handle("POST /policy", postPolicyHandler(objs.IpPolicies))
+	mux.Handle("DELETE /policy/{ip}", deletePolicyHandler(objs.IpPolicies))
 	// keep the prefix
-	mux.Handle("/assets/", http.FileServer(http.FS(assetsFS)))
+	mux.Handle("GET /assets/", http.FileServer(http.FS(assetsFS)))
+	mux.Handle("GET /live", broker)
 	mux.Handle("/", http.HandlerFunc(index))
 
 	if insecure {
 		sv := &http.Server{Addr: addr, Handler: http.NewCrossOriginProtection().Handler(mux)}
 		return sv.ListenAndServe()
 	}
-
-	mux.Handle(LOGIN_ROUTE, http.HandlerFunc(auth.Login))
-	mux.Handle(LOGOUT_ROUTE, http.HandlerFunc(auth.Logout))
 
 	sv := &http.Server{Handler: http.NewCrossOriginProtection().Handler(auth.RequireAuth(mux))}
 

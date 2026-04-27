@@ -21,9 +21,9 @@ var (
 	geoipdb      string
 	tick         time.Duration = time.Second
 	username     string        = "admin"
-	password     string        = "password"
+	password     string        = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8" // sha256 hash of "password"
 	insecure     bool          = false
-	policiesFile string        = "/etc/xdprobe/policies.json"
+	policiesFile string        = "/var/lib/xdprobe/policies.json"
 )
 
 var log zerolog.Logger
@@ -77,7 +77,7 @@ func init() {
 			"password",
 			&password,
 			puzzle.WithShortFlagName("p"),
-			puzzle.WithDescription("Password for authentication"),
+			puzzle.WithDescription("Password for authentication (must be hashed with sha256)"),
 			puzzle.WithEnvName(ENV_PREFIX+"PASSWORD"),
 		),
 		puzzle.DefineVar(
@@ -94,7 +94,7 @@ func init() {
 			&policiesFile,
 			puzzle.WithShortFlagName("f"),
 			puzzle.WithDescription("Path to policies file"),
-			puzzle.WithEnvName(ENV_PREFIX+"POLICIES"),
+			puzzle.WithEnvName(ENV_PREFIX+"POLICIES_FILE"),
 		),
 	)
 	if err != nil {

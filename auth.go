@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
 	"html/template"
@@ -62,18 +63,18 @@ func (s *SessionStore) Delete(token string) {
 // --- Auth Config ---
 
 type Auth struct {
-	Username   string // expected username
-	Password   string // expected password (hash in production!)
-	Store      *SessionStore
-	CookieName string
+	Username       string // expected username
+	HashedPassword []byte // sha256 hash of the expected password
+	Store          *SessionStore
+	CookieName     string
 }
 
-func NewAuth(username, password string) *Auth {
+func NewAuth(username string, hashedPassword []byte) *Auth {
 	return &Auth{
-		Username:   username,
-		Password:   password,
-		Store:      NewSessionStore(24 * time.Hour),
-		CookieName: "session",
+		Username:       username,
+		HashedPassword: hashedPassword,
+		Store:          NewSessionStore(24 * time.Hour),
+		CookieName:     "session",
 	}
 }
 
@@ -100,7 +101,8 @@ func (a *Auth) loginPost(w http.ResponseWriter, r *http.Request) {
 
 	// Constant-time comparison to prevent timing attacks
 	usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(a.Username)) == 1
-	passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(a.Password)) == 1
+	hashedPassword := sha256.Sum256([]byte(password))
+	passwordMatch := subtle.ConstantTimeCompare(hashedPassword[:], a.HashedPassword) == 1
 
 	if !usernameMatch || !passwordMatch {
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -150,16 +152,16 @@ func (a *Auth) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, LOGIN_ROUTE, http.StatusSeeOther)
 }
 
-func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		a.loginGet(w, r)
-	case http.MethodPost:
-		a.loginPost(w, r)
-	default:
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
+// func (a *Auth) Login(w http.ResponseWriter, r *http.Request) {
+// 	switch r.Method {
+// 	case http.MethodGet:
+// 		a.loginGet(w, r)
+// 	case http.MethodPost:
+// 		a.loginPost(w, r)
+// 	default:
+// 		w.WriteHeader(http.StatusMethodNotAllowed)
+// 	}
+// }
 
 // --- Middleware ---
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -69,24 +70,40 @@ func (p *Policy) toEBPF() (uint32, []uint64, error) {
 	return key, value, nil
 }
 
-func policyHandler(IpPolicies *ebpf.Map) http.HandlerFunc {
+func getPolicyHandler(IpPolicies *ebpf.Map) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		policies := listPolicies(IpPolicies)
+		json.NewEncoder(w).Encode(policies)
+	}
+}
 
-		// get all policies if GET
-		if r.Method == http.MethodGet {
-			w.Header().Set("Content-Type", "application/json")
-			policies := listPolicies(IpPolicies)
-			json.NewEncoder(w).Encode(policies)
+func deletePolicyHandler(IpPolicies *ebpf.Map) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip := r.PathValue("ip")
+		if err := removePolicy(IpPolicies, ip); err != nil {
+			if errors.Is(err, ebpf.ErrKeyNotExist) {
+				log.Warn().Err(err).Str("ip", ip).Msg("Policy does not exist")
+				http.Error(w, "Policy not found", http.StatusNotFound)
+			} else {
+				log.Error().Err(err).Str("ip", ip).Msg("Failed to remove policy")
+				http.Error(w, "Bad request", http.StatusBadRequest)
+			}
 			return
 		}
-
-		// only allow POST for updates
-		if r.Method != http.MethodPost {
-			log.Warn().Str("method", r.Method).Msg("Method not allowed")
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		/* save to disk */
+		if err := storeOnDisk(IpPolicies, policiesFile); err != nil {
+			log.Error().Err(err).Msg("Failed to store policies on disk")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		log.Info().Str("ip", ip).Msg("Policy removed successfully")
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
 
+func postPolicyHandler(IpPolicies *ebpf.Map) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		policy := Policy{}
 		if err := json.NewDecoder(r.Body).Decode(&policy); err != nil {
 			log.Error().Err(err).Msg("Failed to decode request body")
@@ -121,7 +138,7 @@ func policyHandler(IpPolicies *ebpf.Map) http.HandlerFunc {
 			Str("ip", policy.IP).
 			Str("action", string(policy.Action)).
 			Msg("Policy updated successfully")
-		w.WriteHeader(http.StatusNoContent)
+		w.WriteHeader(http.StatusCreated)
 	}
 }
 
@@ -138,6 +155,15 @@ func listPolicies(IpPolicies *ebpf.Map) []Policy {
 		out = append(out, policy)
 	}
 	return out
+}
+
+func removePolicy(IpPolicies *ebpf.Map, ip string) error {
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return fmt.Errorf("invalid IP address: %s", ip)
+	}
+	key := ipToUint32(parsedIP)
+	return IpPolicies.Delete(key)
 }
 
 func storeOnDisk(IpPolicies *ebpf.Map, path string) error {
