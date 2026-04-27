@@ -34,7 +34,7 @@ ProtectHome=yes
 PrivateTmp=yes
 RuntimeDirectory=xdprobe
 RuntimeDirectoryMode=0755
-ReadWritePaths=/run/xdprobe
+ReadWritePaths=/run/xdprobe /var/lib/xdprobe
 # CAP_SYS_ADMIN is required because of pointer arithmetic in eBPF programs.
 CapabilityBoundingSet=CAP_SYS_RESOURCE CAP_BPF CAP_NET_ADMIN CAP_SYS_ADMIN
 AmbientCapabilities=CAP_SYS_RESOURCE CAP_BPF CAP_NET_ADMIN CAP_SYS_ADMIN
