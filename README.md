@@ -34,16 +34,16 @@ The web UI is available at [`http://localhost:8080`](http://localhost:8080) (log
 
 All flags can also be set via environment variables prefixed with `XDPROBE_`.
 
-| Flag                    | Env                     | Default                      | Description                      |
-| ----------------------- | ----------------------- | ---------------------------- | -------------------------------- |
-| `-i`, `--interface`     | `XDPROBE_NIC`           | `lo`                         | Network interface to attach to   |
-| `-a`, `--addr`          | `XDPROBE_ADDR`          | `:8080`                      | HTTP server listen address       |
-| `-g`, `--geoip`         | `XDPROBE_GEOIP`         | *(required)*                 | GeoIP database file (mmdb)       |
-| `-t`, `--tick`          | `XDPROBE_TICK`          | `1s`                         | eBPF map polling interval        |
-| `-u`, `--username`      | `XDPROBE_USERNAME`      | `admin`                      | Web UI username                  |
-| `-p`, `--password`      | `XDPROBE_PASSWORD`      | `password`                   | Web UI password                  |
-| `-k`, `--insecure`      | `XDPROBE_INSECURE`      | `false`                      | Disable authentication           |
-| `-f`, `--policies-file` | `XDPROBE_POLICIES_FILE` | `/etc/xdprobe/policies.json` | Policies storage for persistence |
+| Flag                    | Env                     | Default                          | Description                      |
+| ----------------------- | ----------------------- | -------------------------------- | -------------------------------- |
+| `-i`, `--interface`     | `XDPROBE_NIC`           | `lo`                             | Network interface to attach to   |
+| `-a`, `--addr`          | `XDPROBE_ADDR`          | `:8080`                          | HTTP server listen address       |
+| `-g`, `--geoip`         | `XDPROBE_GEOIP`         | *(required)*                     | GeoIP database file (mmdb)       |
+| `-t`, `--tick`          | `XDPROBE_TICK`          | `1s`                             | eBPF map polling interval        |
+| `-u`, `--username`      | `XDPROBE_USERNAME`      | `admin`                          | Web UI username                  |
+| `-p`, `--password`      | `XDPROBE_PASSWORD`      | `password`                       | Web UI password (sha256 hash)    |
+| `-k`, `--insecure`      | `XDPROBE_INSECURE`      | `false`                          | Disable authentication           |
+| `-f`, `--policies-file` | `XDPROBE_POLICIES_FILE` | `/var/lib/xdprobe/policies.json` | Policies storage for persistence |
 
 ## Service
 

@@ -60,6 +60,11 @@ button.icon {
   @apply aspect-square flex justify-center items-center;
 }
 
+a[type="button"].destructive,
+button.destructive {
+  @apply text-destructive hover:bg-destructive/10;
+}
+
 input[type="text"] {
   @apply h-8 rounded-md border border-muted outline-none focus:border-foreground px-3 py-1 user-invalid:not-focus:not-placeholder-shown:border-destructive user-invalid:not-focus:not-placeholder-shown:hover:border-destructive/80 user-invalid:text-destructive focus:text-foreground hover:border-foreground/20 transition-colors duration-100 placeholder:text-muted-foreground;
 }

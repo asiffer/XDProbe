@@ -93,12 +93,12 @@
   class="absolute left-0 h-screen w-full max-w-md px-6 z-10 flex flex-col justify-center"
 >
   <div
-    class="w-full flex flex-col gap-4 text-foreground bg-muted rounded-lg p-6 max-h-2/3 overflow-hidden"
+    class="w-full flex flex-col gap-4 text-foreground border border-muted-foreground rounded-lg p-6 max-h-2/3 overflow-hidden"
   >
     <div class="flex flex-row justify-between items-center">
       <h2 class="font-semibold text-muted-foreground">Policies</h2>
     <div>
-      <button class="icon hover:bg-foreground/10" @click="$store.policy.openModal('')" title="Add new policy">
+      <button class="icon hover:bg-muted/80" @click="$store.policy.openModal('')" title="Add new policy">
         <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus-icon lucide-plus">
           <path d="M5 12h14"/>
           <path d="M12 5v14"/>
@@ -111,15 +111,16 @@
         <tr class="border-b border-b-muted-foreground">
           <th class="text-right">IP</th>
           <th class="text-right pl-2">Action</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
         <template x-for="policy in $store.policy.policies" :key="policy.ip">
           <tr>
             <td x-text="policy.ip" class="font-mono text-right"></td>
-            <td class="text-right pl-2 py-1">
+            <td class="text-right pl-2 py-0.5">
               <select
-                class="h-9 w-full rounded-md border border-muted outline-none focus:border-foreground px-3 py-1 invalid:not(:placeholder-shown)]:border-destructive hover:border-foreground/20 transition-colors duration-100"
+                class="w-full"
                 @change="$store.policy.setPolicy(policy.ip, $event.target.value).catch(err => alert(err))"
               >
                 <option value="pass" :selected="policy.action === 'pass'">
@@ -133,6 +134,14 @@
                 </option>
               </select>
             </td>
+            <td class="pl-2 flex flex-row items-center justify-center gap-2 py-0.5">
+              <button title="Remove policy" class="icon destructive" @click="$store.policy.deletePolicy(policy.ip).catch(err => alert(err))">
+                <svg xmlns="http://www.w3.org/2000/svg" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash">
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                  <path d="M3 6h18"/>
+                  <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
           </tr>
         </template>
       </tbody>
@@ -194,6 +203,17 @@
           "Loaded policies:",
           this.policies.map((p) => p),
         );
+      },
+
+      async deletePolicy(ip) {
+        const response = await fetch(`/policy/${ip}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        await this.listPolicies();
       },
 
       init() {
