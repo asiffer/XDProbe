@@ -85,3 +85,8 @@ if id xdprobe >/dev/null 2>&1; then ok; else ko "user not found"; fi
 check "User 'xdprobe' has no login shell"
 shell=$(getent passwd xdprobe | cut -d: -f7)
 if [ "$shell" = "/usr/sbin/nologin" ] || [ "$shell" = "/sbin/nologin" ]; then ok; else ko "shell is '$shell'"; fi
+
+# --- summary ---
+
+printf "\n%d passed, %d failed\n" "$PASS" "$FAIL"
+[ "$FAIL" -eq 0 ]
